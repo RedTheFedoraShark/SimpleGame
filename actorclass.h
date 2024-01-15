@@ -1,22 +1,23 @@
 #ifndef ACTORCLASS_H
 #define ACTORCLASS_H
 #include <QObject>
-
-class ActorClass : QObject
+#include <QGraphicsPixmapItem>
+class ActorClass : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString name READ name WRITE setName FINAL)
-    Q_PROPERTY(qint16 range READ range WRITE setRange FINAL)
+    Q_PROPERTY(int range READ range WRITE setRange FINAL)
 private:
     QString m_name;
-    qint16 m_range;
-public:
+    int m_range;
 
+public:
+    ActorClass();
     ActorClass(QString name, int range);
     void setName(QString name);
-    void setRange(qint16 range);
-    QString name();;
-    qint16 range();
+    void setRange(int range);
+    QString name();
+    int range();
 };
 
 #endif // ACTORCLASS_H

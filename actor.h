@@ -2,37 +2,49 @@
 #define ACTOR_H
 #include "actorclass.h"
 #include "enums.h"
+#include <QObject>
+#include <QGraphicsPixmapItem>
 
-class Actor: QObject
+class Actor: public QObject, public QGraphicsPixmapItem
 {
 private:
     Q_OBJECT
-    Q_PROPERTY(ActorClass profession READ profession WRITE setProfession FINAL)
-    Q_PROPERTY(qint16 x READ x WRITE setX NOTIFY xChanged FINAL)
-    Q_PROPERTY(qint16 y READ y WRITE setY NOTIFY yChanged FINAL)
-    Q_PROPERTY(qint16 AP READ AP WRITE setAP NOTIFY APChanged FINAL)
-    Q_PROPERTY(Directions direction READ direction WRITE setDirection NOTIFY directionChanged FINAL)
-    ActorClass m_profesion;
-    qint16 m_x, m_y, m_AP;
+    Q_PROPERTY(ActorClass *profession READ profession WRITE setProfession FINAL)
+    Q_PROPERTY(int x READ x WRITE setX FINAL)
+    Q_PROPERTY(int y READ y WRITE setY FINAL)
+    Q_PROPERTY(int AP READ AP WRITE setAP FINAL)
+    Q_PROPERTY(Directions direction READ direction WRITE setDirection FINAL)
+    ActorClass *m_profession;
+    int m_x, m_y, m_AP;
     Directions m_direction;
 public:
     Actor();
     void move();
-    ActorClass profession();
-    qint16 x();
-    qint16 y();
-    qint16 AP();
+    ActorClass *profession();
+    int x();
+    int y();
+    int AP();
     Directions direction();
-    void setProfession();
-    void setX();
-    void setY();
-    void setAP();
-    void setDireciton();
+    void setProfession(ActorClass *profession);
+    void setX(int x);
+    void setY(int y);
+    void setAP(int AP);
+    void setDirection(Directions direction);
 
 };
 
-class Player: Actor{};
+class Player: public Actor
+{
+public:
+    Player(int posx, int posy);
+};
 
-class Enemy: Actor{};
+class Test_Player: public Player
+{
+public:
+    Test_Player(int posx, int posy);
+};
+
+// class Enemy: Actor{};
 
 #endif // ACTOR_H
