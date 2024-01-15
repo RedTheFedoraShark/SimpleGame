@@ -1,0 +1,5 @@
+# You've done a lot!
+# Next: You are adding player movement
+#   - Player moves in direction -> delete previous three (or 5) tiles, add new tiles
+#   - Player rotaion -> player can rotate by 45 degrees in each step
+#   - Player

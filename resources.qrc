@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/gfx">
+        <file>blacktile.png</file>
+        <file>blueactor.png</file>
+        <file>whitetile.png</file>
+    </qresource>
+    <qresource prefix="/"/>
+</RCC>
