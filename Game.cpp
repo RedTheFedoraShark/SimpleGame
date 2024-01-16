@@ -76,7 +76,9 @@ bool Game::eventFilter(QObject *watched, QEvent *event)
 {
     if (event->type() == QEvent::KeyPress)
     {
-        switch (key->key())
+        QKeyEvent *key = (QKeyEvent*)event;
+        int _key = key->key();
+        switch (_key)
         {
         case Qt::Key_Plus:
             this->setScale(scale()+0.1);

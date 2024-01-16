@@ -1,0 +1,11 @@
+{
+    "resolution":
+    {
+        "y":800,
+        "x":600,
+    },
+    "tilesize": 100,
+    "mapsize":7,
+    "scale":1.0,
+
+}

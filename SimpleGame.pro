@@ -31,4 +31,5 @@ RESOURCES += \
     resources.qrc
 
 DISTFILES += \
+    config.json \
     todo.txt

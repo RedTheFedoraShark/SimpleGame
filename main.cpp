@@ -13,7 +13,6 @@ int main(int argc, char *argv[])
     int MAP_SIZE = 7;
     QApplication a(argc, argv);
     QGraphicsScene  *scene = new QGraphicsScene();
-    scene->setSceneRect(0, 0, RES_X, RES_Y);
     QGraphicsView   *view  = new QGraphicsView();
     view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
