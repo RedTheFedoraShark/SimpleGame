@@ -12,7 +12,7 @@ class Game: public QObject{
     Q_PROPERTY(int mapSize READ mapSize FINAL)
     Q_PROPERTY(std::vector<Tile *> map READ map FINAL)
     Q_PROPERTY(std::vector<Actor *> actors READ actors FINAL)
-    Q_PROPERTY(qreal scale READ scale WRITE setScale NOTIFY scaleHasChanged FINAL)
+    Q_PROPERTY(qreal scale READ scale WRITE setScale NOTIFY scaleChanged FINAL)
 private:
     /* Members */
     int RES_X, RES_Y;
@@ -23,8 +23,14 @@ private:
     QGraphicsScene *scene;
     qreal m_scale;
     void updateScale();
+    void addActor(Actor *actor);
+    void delActor(int index);
+    void rotActor(int dir, int index);
+    void movActor(int dir, int index);
     /* Methods */
-    bool eventFilter(QObject *watched, QEvent *event);
+
+protected:
+    bool eventFilter(QObject *object, QEvent *event) override;
 
 public:
     Game(int tilesize, int mapSize, int RES_X, int RES_Y, QGraphicsScene *scene);
@@ -34,6 +40,8 @@ public:
     std::vector<Actor *> actors();
     void update_scene();
     void setScale(qreal scale);
+signals:
+    void scaleChanged();
 };
 
 #endif // GAME_H

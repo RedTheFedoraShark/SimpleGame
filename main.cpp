@@ -18,6 +18,7 @@ int main(int argc, char *argv[])
     view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     view->setScene(scene);
     Game *game = new Game(TILE_SIZE, MAP_SIZE, RES_X, RES_Y, scene);
+    view->installEventFilter(game);
     view->setMinimumWidth(RES_X);
     view->setMinimumHeight(RES_Y);
     // view->resize(805, 605);

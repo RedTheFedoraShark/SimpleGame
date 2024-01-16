@@ -32,6 +32,7 @@ public:
     void setRange(int range);
     void setName(QString name);
     void setDirection(Directions direction);
+    void turn(int dir);
 
 };
 

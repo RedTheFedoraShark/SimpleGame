@@ -14,6 +14,18 @@ void Actor::setRange(int range) { this->m_range = range; }
 void Actor::setName(QString name) { this->m_name = name; }
 void Actor::setDirection(Directions direction) { this->m_direction = direction; }
 
+void Actor::turn(int dir)
+{
+    if(this->direction() == Directions::NORTH && dir == -1)
+        this->setDirection(Directions::NORTHWEST);
+    else if (this->direction() == Directions::NORTHWEST && dir == 1)
+        this->setDirection(Directions::NORTH);
+    else
+        this->setDirection(Directions(this->direction()+dir));
+
+    this->setRotation(this->rotation()+dir*45);
+}
+
 Player::Player(int posx, int posy)
 {
     this->setX(posx);
