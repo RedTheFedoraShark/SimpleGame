@@ -11,14 +11,12 @@ CONFIG += c++17
 SOURCES += \
     Game.cpp \
     actor.cpp \
-    actorclass.cpp \
     main.cpp \
     tile.cpp
 
 HEADERS += \
     Game.h \
     actor.h \
-    actorclass.h \
     enums.h \
     tile.h
 
