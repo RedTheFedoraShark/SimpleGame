@@ -19,7 +19,7 @@ private:
     QString m_name;
 public:
     Actor();
-    void move();
+    void move(int x, int y);
     int x();
     int y();
     int AP();

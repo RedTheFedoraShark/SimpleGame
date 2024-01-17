@@ -65,70 +65,6 @@ void Game::updateScale()
     }
 }
 
-bool Game::eventFilter(QObject *object, QEvent *event)
-/* handle event recieved from view, used for detecting user input */
-{
-    if (event->type()==QEvent::KeyPress) {
-        QKeyEvent* key = (QKeyEvent*)event;
-        switch(key->key())
-        {
-        case Qt::Key_Plus:
-            this->setScale(this->scale()+0.1);
-            return true;
-
-        case Qt::Key_Minus:
-            this->setScale(this->scale()-0.1);
-            return true;
-
-        case Qt::Key_W:
-            return true;
-
-        case Qt::Key_A:
-            return true;
-
-        case Qt::Key_S:
-            return true;
-
-        case Qt::Key_D:
-            return true;
-
-        case Qt::Key_E:
-            this->rotActor(+1, 0);
-            return true;
-
-        case Qt::Key_Q:
-            this->rotActor(-1, 0);
-            return true;
-
-        case Qt::Key_F12: // turn on debug mode
-          this->debug = (this->debug) ? false : true;
-          return true;
-
-        case Qt::Key_F11: // despawn an actor
-            if (this->debug && m_actors.size() > 1)
-            {
-                this->delActor(this->m_actors.size()-1);
-                return true;
-            }
-            return QObject::eventFilter(object, event);
-
-        case Qt::Key_F10: // spawn an enemy Pawn
-            if (this->debug && m_actors.size() < m_mapSize*m_mapSize)
-            {
-                this->spawnRandom();
-                return true;
-            }
-            return QObject::eventFilter(object, event);
-
-        default:
-            return QObject::eventFilter(object, event);
-        }
-    } else {
-        return QObject::eventFilter(object, event);
-    }
-    return false;
-}
-
 void Game::setScale(qreal scale) { if(scale >= 0.4 && scale < 1.6)this->m_scale = scale; this->updateScale(); }
 
 void Game::addActor(Actor *actor)
@@ -193,16 +129,89 @@ void Game::delActor(int index)
     qDebug()<<this->m_actors.size();
 }
 
-void Game::movActor(int index, Directions dir = NULL)
+bool Game::movActor(int index, Directions dir = NULL)
 /* attempt to move actor on index in dir direction. By default move it forwards */
 {
     if (dir == NULL) dir = m_actors[index]->direction();
     int px = m_actors[index]->x();
     int py = m_actors[index]->y();
-    for (int i = 0; i < m_actors.size(); i++)
-    {
+//     for (int i = 0; i < m_actors.size(); i++)
+//     {
 
+//     }
+}
+
+bool Game::movPlayer(Directions dir)
+/* this actually doesn't move the player, as it would be more trouble than it's worth. Instead it's moving everything towards the player. */
+{
+    int x, y;
+    // whether to add(true) or remove(false) or leave alone (null) r(ow) or c(olumn) at beg(inning) or end of the square board
+    bool rbeg = NULL, rend = NULL, cbeg = NULL, cend = NULL;
+    switch (dir)
+    {
+    case NORTH:
+        x = 0; y = 1;
+        rbeg = true; rend = false;
+        break;
+
+    case NORTHEAST:
+        x = -1; y = 1;
+        rbeg = true; rend = false; cbeg = false; cend = true;
+        break;
+
+    case EAST:
+        x = -1; y = 0;
+        cbeg = false; cend = true;
+        break;
+
+    case SOUTHEAST:
+        x = -1; y = -1;
+        rbeg = false; rend = true; cbeg = false; cend = true;
+        break;
+
+    case SOUTH:
+        x = 0; y = -1;
+        rbeg = false; rend = true;
+        break;
+
+    case SOUTHWEST:
+        x = 1; y = 1;
+        rbeg = false; rend = true; cbeg = true; cend = false;
+        break;
+
+    case WEST:
+        x = 1; y = 0;
+        cbeg = true; cend = false;
+        break;
+
+    case NORTHWEST:
+        x = 1; y = 1;
+        rbeg = true; rend = false; cbeg = true; cend = false;
+        break;
+
+    default:
+        return false;
     }
+    for (int i = 1; i < m_actors.size(); i++) // move everyone down
+    {
+        m_actors[i]->move(x, y);
+        if(m_actors[i]->x() >= m_mapSize || m_actors[i]->x() < 0 || m_actors[i]->y() >= m_mapSize || m_actors[i]->y() < 0)
+        { this->delActor(i); continue; }
+        m_actors[i]->moveBy(x*m_tileSize*m_scale, y*m_tileSize*m_scale);
+    }
+    for (int i = 0; i < m_map.size(); i++)
+    {
+        i f (cend){}
+    }
+    return true;
+}
+
+void Game::addTile(int x, int y)
+{
+    int i = this->m_map.size();
+    this->m_map.push_back(new Tile(x,y, this->checkerboard));
+    this->m_map[i]->setScale(this->m_scale);
+    this->scene->addItem(this->m_map[i]);
 }
 
 int Game::randomUniform(int min, int max)
@@ -220,3 +229,67 @@ qreal Game::scale() { return this->m_scale; }
 std::vector<Tile *> Game::map() { return this->m_map; }
 
 std::vector<Actor *> Game::actors() { return this->m_actors; }
+
+bool Game::eventFilter(QObject *object, QEvent *event)
+/* handle event recieved from view, used for detecting user input */
+{
+    if (event->type()==QEvent::KeyPress) {
+        QKeyEvent* key = (QKeyEvent*)event;
+        switch(key->key())
+        {
+        case Qt::Key_Plus:
+            this->setScale(this->scale()+0.1);
+            return true;
+
+        case Qt::Key_Minus:
+            this->setScale(this->scale()-0.1);
+            return true;
+
+        case Qt::Key_W:
+            return true;
+
+        case Qt::Key_A:
+            return true;
+
+        case Qt::Key_S:
+            return true;
+
+        case Qt::Key_D:
+            return true;
+
+        case Qt::Key_E:
+            this->rotActor(+1, 0);
+            return true;
+
+        case Qt::Key_Q:
+            this->rotActor(-1, 0);
+            return true;
+
+        case Qt::Key_F12: // turn on debug mode
+            this->debug = (this->debug) ? false : true;
+            return true;
+
+        case Qt::Key_F11: // despawn an actor
+            if (this->debug && m_actors.size() > 1)
+            {
+                this->delActor(this->m_actors.size()-1);
+                return true;
+            }
+            return QObject::eventFilter(object, event);
+
+        case Qt::Key_F10: // spawn an enemy Pawn
+            if (this->debug && m_actors.size() < m_mapSize*m_mapSize)
+            {
+                this->spawnRandom();
+                return true;
+            }
+            return QObject::eventFilter(object, event);
+
+        default:
+            return QObject::eventFilter(object, event);
+        }
+    } else {
+        return QObject::eventFilter(object, event);
+    }
+    return false;
+}

@@ -29,8 +29,13 @@ private:
     void addActor(Actor *actor);
     void delActor(int index);
     void rotActor(int dir, int index);
-    void movActor(int dir, int index);
+    bool movActor(int dir, int index);
+    void addTile(int x, int y);
+    void delTile();
+    bool movPlayer(Directions dir);
     void spawnRandom();
+    void pathFind();
+    void decide();
 
 protected:
     bool eventFilter(QObject *object, QEvent *event) override;
