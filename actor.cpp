@@ -23,7 +23,7 @@ void Actor::turn(int dir)
     else
         this->setDirection(Directions(this->direction()+dir));
 
-    this->setRotation(this->rotation()+dir*45);
+    // this->setRotation(this->rotation()+dir*45);
 }
 
 Player::Player(int posx, int posy)
@@ -32,7 +32,24 @@ Player::Player(int posx, int posy)
     this->setY(posy);
 }
 
+Enemy::Enemy(int posx, int posy, int middle)
+{
+    this->setX(posx);
+    this->setY(posy);
+    this->middle = middle;
+    // int dirX = middle - posx;
+    // int dirY = middle - posy;
+    this->setDirection(NORTH);
+    // this->setDirection();
+}
+
 Test_Player::Test_Player(int posx, int posy) : Player(posx, posy)
 {
     this->setPixmap(QPixmap(":/gfx/blueactor.png"));
 }
+
+Pawn::Pawn(int posx, int posy, int middle) : Enemy(posx, posy, middle)
+{
+    this->setPixmap(QPixmap(":/gfx/blueactor.png"));
+}
+

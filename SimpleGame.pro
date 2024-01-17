@@ -11,6 +11,7 @@ CONFIG += c++17
 SOURCES += \
     Game.cpp \
     actor.cpp \
+    gamelog.cpp \
     main.cpp \
     tile.cpp
 
@@ -18,6 +19,7 @@ HEADERS += \
     Game.h \
     actor.h \
     enums.h \
+    gamelog.h \
     tile.h
 
 FORMS +=

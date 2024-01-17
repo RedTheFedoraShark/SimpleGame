@@ -22,12 +22,15 @@ private:
     bool checkerboard = false;
     QGraphicsScene *scene;
     qreal m_scale;
+    bool debug = false;
+    /* Methods */
+    int randomUniform(int min, int max);
     void updateScale();
     void addActor(Actor *actor);
     void delActor(int index);
     void rotActor(int dir, int index);
     void movActor(int dir, int index);
-    /* Methods */
+    void spawnRandom();
 
 protected:
     bool eventFilter(QObject *object, QEvent *event) override;
@@ -38,7 +41,7 @@ public:
     qreal scale();
     std::vector<Tile *> map();
     std::vector<Actor *> actors();
-    void update_scene();
+    // void update_scene();
     void setScale(qreal scale);
 signals:
     void scaleChanged();

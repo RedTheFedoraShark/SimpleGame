@@ -48,6 +48,18 @@ public:
     Test_Player(int posx, int posy);
 };
 
-// class Enemy: Actor{};
+class Enemy: public Actor
+{
+private:
+    int middle;
+public:
+    Enemy(int posx, int posy, int middle);
+};
+
+class Pawn: public Enemy
+{
+public:
+    Pawn(int posx, int posy, int middle);
+};
 
 #endif // ACTOR_H
