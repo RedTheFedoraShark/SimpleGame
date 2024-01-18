@@ -21,7 +21,6 @@ Game::Game(int tileSize, int mapSize, int RES_X, int RES_Y, QGraphicsScene *scen
             x = (RES_X-(mapSize*tileSize*scale()))/2;
             y += tileSize*scale();
         }
-        // qDebug() << x << ";" << y <<"\n";
         this->m_map.push_back(new Tile(x,y, this->checkerboard));
         this->m_map[i]->setScale(this->m_scale);
         this->scene->addItem(this->m_map[i]);
@@ -38,10 +37,8 @@ Game::Game(int tileSize, int mapSize, int RES_X, int RES_Y, QGraphicsScene *scen
 void Game::updateScale()
 /* update all tiles' and actors' scale */
 {
-    // qDebug()<<"I was called";
     int x=round((RES_X-(m_mapSize*m_tileSize*m_scale))/2);
     int y=round((RES_Y-(m_mapSize*m_tileSize*m_scale))/2);
-    // qDebug()<<x<<" "<<RES_X<<" "<<m_mapSize<<m_tileSize<<" "<<m_scale<<" "<<(m_mapSize*m_tileSize*m_scale);
     for (int i = 0; i < m_mapSize*m_mapSize; i++)
     {
         if (x == round((RES_X-(m_mapSize*m_tileSize*m_scale))/2) + round((m_mapSize*m_tileSize*scale())))
@@ -52,20 +49,20 @@ void Game::updateScale()
         // qDebug() << x << ";" << y <<"\n";
         this->m_map[i]->setScale(scale());
         this->m_map[i]->setPos(x, y);
+        this->m_map[i]->setZValue(0);
         x+=m_tileSize*scale();
     }
     for (long unsigned int i = 0; i < actors().size(); i++)
     {
         this->m_actors[i]->setScale(scale());
-        // qreal scalingCorrection = (scale()-1)/2;
-        this->m_actors[i]->setTransformOriginPoint(QPoint(0, 0));
+        // this->m_actors[i]->setTransformOriginPoint(QPoint(0, 0));
         x = (RES_X-m_mapSize*m_tileSize*scale())/2 + (m_actors[i]->x())*m_tileSize*scale();
         y = (RES_Y-m_mapSize*m_tileSize*scale())/2 + (m_actors[i]->y())*m_tileSize*scale();
         this->m_actors[i]->setPos(x, y);
+        this->m_actors[i]->setZValue(1);
     }
 }
 
-void Game::setScale(qreal scale) { if(scale >= 0.4 && scale < 1.6)this->m_scale = scale; this->updateScale(); }
 
 void Game::addActor(Actor *actor)
 /* spawn a specified actor */
@@ -122,33 +119,73 @@ bool Game::checkCollide(int index)
 void Game::rotActor(int dir, int index)
 /* turn actor[index] by 1 step (45 degrees) in dir direction */
 {
-    // qreal scalingCorrection = (scale()-1)/2;
-    // qDebug()<<this->m_actors[index]->pixmap().size();
-    // qDebug()<<this->m_actors[index]->scale();
-    // int x = (RES_X-m_mapSize*m_tileSize*1)/2 + (m_actors[index]->x()+0.5)*m_tileSize*1 - this->m_actors[index]->pos().x();
-    // int y = (RES_Y-m_mapSize*m_tileSize*1)/2 + (m_actors[index]->y()+0.5)*m_tileSize*1 - this->m_actors[index]->pos().y();
-    // qDebug()<<this->m_actors[index]->pos()<<x<<y;
-    // this->m_actors[index]->setTransformOriginPoint(QPoint(50, 50));
-    // qDebug()<<this->m_actors[index]->transformOriginPoint();
     this->m_actors[index]->turn(dir);
 }
 
 void Game::delActor(int index)
 /* delete actor on index and remove it from scene */
 {
-    // this->scene->removeItem(this->m_);
-    qDebug()<<this->m_actors.size();
     this->scene->removeItem(this->m_actors[index]);
     this->m_actors.erase(this->m_actors.begin()+index);
-    qDebug()<<this->m_actors.size();
+}
+
+void Game::addTile(int x, int y)
+{
+    int i = this->m_map.size();
+    this->m_map.push_back(new Tile(x,y, this->checkerboard));
+    this->checkerboard = (this->checkerboard) ? false : true;
+    this->m_map[i]->setScale(this->m_scale);
+    this->scene->addItem(this->m_map[i]);
+}
+
+void Game::addTile(int x, int y, int index)
+{
+    if (index >= this->m_map.size())
+    {
+        this->addTile(x, y);
+    }
+    else
+    {
+        this->m_map.insert(m_map.begin()+index, new Tile(x,y, this->checkerboard));
+        this->checkerboard = (this->checkerboard) ? false : true;
+        this->m_map[index]->setScale(this->m_scale);
+        this->scene->addItem(this->m_map[index]);
+    }
+}
+
+void Game::delTile(int index)
+{
+    this->scene->removeItem(this->m_map[index]);
+    this->m_map.erase(m_map.begin()+index);
+}
+
+void Game::delTile(int begin, int end)
+{
+    for(int i = begin; i < end; i++)
+    {
+        this->scene->removeItem(this->m_map[i]);
+    }
+    this->m_map.erase(m_map.begin()+begin, m_map.begin()+end);
+}
+
+bool Game::playerWillCollide(int x, int y)
+{
+    for(int i = 1; i < m_actors.size(); i++)
+    {
+        qDebug()<<"Checking player "<<i;
+        qDebug()<<m_actors[0]->x()<< m_actors[i]->y();
+        qDebug()<<m_actors[i]->x()<< m_actors[i]->y();
+    if (m_actors[0]->x()+x == m_actors[i]->x() &&
+        m_actors[0]->y()+y == m_actors[i]->y() ) return true;
+    }
+    return false;
 }
 
 bool Game::movActor(Directions dir, int index)
 /* attempt to move actor on index in dir direction. By default move it forwards */
 {
-    int x, y;
-    // if (dir == NULL) dir = m_actors[0]->direction();
-    // convert dir to x and y modifiers
+    int x, y; // init relative x and y by which actor shall be moved
+    // convert Directions to x and y modifiers
     switch (dir)
     {
     case NORTH:
@@ -195,81 +232,135 @@ bool Game::movActor(Directions dir, int index)
 }
 
 bool Game::movPlayer(Directions dir)
-/* this actually doesn't move the player, as it would be more trouble than it's worth. Instead it's moving everything towards the player. */
+/* this actually doesn't move the player, as it would be more trouble than it's worth.
+ * Instead it's moving everything else in the other direction. (yes, that's easier.) */
 {
-    int x, y;
+    int dx, dy, x=0, y=0; // dx, dx - relative x and y by which actors will be moved ; negative value of players movement direction
+                          // x and y are dummies for tile manip to work
     // whether to add(true) or remove(false) or leave alone (null) r(ow) or c(olumn) at beg(inning) or end of the square board
-    // convert dir to x and y modifiers
+    // convert Directions to x and y modifiers
     switch (dir)
     {
     case NORTH:
-        x = 0; y = 1;
-
-        m_map.erase(m_map.size()-mapSize, m_map.size());
-        int x=(RES_X-(mapSize*tileSize*scale()))/2, y=(RES_Y-(mapSize*tileSize*scale()))/2;
-        for(int i = 0; i < mapSize; i++)
+        dx = 0; dy = 1;
+        if(this->playerWillCollide(-dx, -dy)) return false;
+        this->delTile(m_map.size()-m_mapSize, m_map.size()); //remove last row
+        for(int i = 0; i < m_mapSize; i++) // insert a row of new tiles at the beginning
         {
-            m_map.insert(0, new Tile(x, y));
-            x += m_TileSize*m_scale;
+            this->addTile(x, y, i);
         }
         break;
 
     case NORTHEAST:
-        x = -1; y = 1;
-        rbeg = true; rend = false; cbeg = false; cend = true;
+        dx = -1; dy = 1;
+        if(this->playerWillCollide(-dx, -dy)) return false;
+        this->delTile(m_map.size()-m_mapSize, m_map.size());
+        // m_map.erase(m_map.end()-m_mapSize, m_map.end()); // remove last row
+        for (long unsigned int i = 0; i < m_map.size(); i+=m_mapSize) // for each row remove first tile and add one at the end
+        {
+            this->delTile(i);
+            this->addTile(x, y, i+m_mapSize);
+        }
+        for(int i = 0; i < m_mapSize; i++) // insert a row of new tiles at the beginning
+        {
+            this->addTile(x, y, 0);
+        }
         break;
 
     case EAST:
-        x = -1; y = 0;
-        cbeg = false; cend = true;
+        dx = -1; dy = 0;
+        if(this->playerWillCollide(-dx, -dy)) return false;
+        for (long unsigned int i = 0; i < m_map.size(); i+=m_mapSize) // for each for remove first and add last
+        {
+            this->delTile(i);
+            this->addTile(x, y, i+m_mapSize);
+        }
         break;
 
     case SOUTHEAST:
-        x = -1; y = -1;
-        rbeg = false; rend = true; cbeg = false; cend = true;
+        dx = -1; dy = -1;
+        if(this->playerWillCollide(-dx, -dy)) return false;
+        // m_map.erase(m_map.begin(), m_map.begin()+m_mapSize); // remove first row
+        this->delTile(0, m_mapSize);
+        for (long unsigned int i = 0; i < m_mapSize*m_mapSize; i+=m_mapSize) // for each row remove first cell and add at a new one at the end
+        {
+            this->delTile(i);
+            this->addTile(x, y, i+m_mapSize);
+        }
+        for(int i = m_map.size(); i < m_mapSize*m_mapSize; i++) // insert a new row at the end
+        {
+            this->addTile(x, y);
+        }
         break;
 
     case SOUTH:
-        x = 0; y = -1;
-        rbeg = false; rend = true;
+        dx = 0; dy = -1;
+        if(this->playerWillCollide(-dx, -dy)) return false;
+        // m_map.erase(m_map.begin(), m_map.end()); // remove first row
+        this->delTile(0, m_mapSize);
+        for(int i = m_map.size(); i < m_mapSize*m_mapSize; i++) // insert a new row at the end
+        {
+            this->addTile(x, y);
+        }
         break;
 
     case SOUTHWEST:
-        x = 1; y = 1;
-        rbeg = false; rend = true; cbeg = true; cend = false;
+        dx = 1; dy = 1;
+        if(this->playerWillCollide(-dx, -dy)) return false;
+        this->delTile(0, m_mapSize);
+        for (long unsigned int i = 0; i < m_mapSize*m_mapSize; i+=m_mapSize) // for each for remove last and add first
+        {
+            this->delTile(i+m_mapSize);
+            this->addTile(x, y, i);
+        }
+        for(int i = m_map.size(); i < m_mapSize*m_mapSize; i++) // insert a new row at the end
+        {
+            this->addTile(x, y);
+        }
         break;
 
     case WEST:
-        x = 1; y = 0;
-        cbeg = true; cend = false;
+        dx = 1; dy = 0;
+        if(this->playerWillCollide(-dx, -dy)) return false;
+        for (long unsigned int i = 0; i < m_mapSize*m_mapSize; i+=m_mapSize) // for each for remove last and add first
+        {
+            this->delTile(i+m_mapSize-1);
+            this->addTile(x, y, i);
+        }
         break;
 
     case NORTHWEST:
-        x = 1; y = 1;
-        rbeg = true; rend = false; cbeg = true; cend = false;
+        dx = 1; dy = 1;
+        if(this->playerWillCollide(-dx, -dy)) return false;
+        // m_map.erase(m_map.end()-m_mapSize, m_map.end()); // remove last row
+        this->delTile(m_map.size()-m_mapSize, m_map.size());
+        for (long unsigned int i = 0; i < m_mapSize*m_mapSize; i+=m_mapSize) // for each for remove last and add first
+        {
+            this->delTile(i+m_mapSize);
+            this->addTile(x, y, i);
+        }
+        for(int i = 0; i < m_mapSize; i++) // insert a row of new tiles at the beginning
+        {
+            // Tile *tile = new Tile(x, y, checkerboard);
+            this->addTile(x, y, i);
+        }
         break;
 
     default:
         return false;
     }
-    // for (long unsigned int i = 1; i < m_actors.size(); i++) // move everyone down
-    // {
-    //     m_actors[i]->move(x, y);
-    //     if(m_actors[i]->x() >= m_mapSize || m_actors[i]->x() < 0 || m_actors[i]->y() >= m_mapSize || m_actors[i]->y() < 0)
-    //     { this->delActor(i); continue; }
-    //     m_actors[i]->moveBy(x*m_tileSize*m_scale, y*m_tileSize*m_scale);
-    // }
-
+    for (long unsigned int i = 1; i < m_actors.size(); i++) // move everyone down
+    {
+        m_actors[i]->move(dx, dy);
+        if(m_actors[i]->x() >= m_mapSize || m_actors[i]->x() < 0 || m_actors[i]->y() >= m_mapSize || m_actors[i]->y() < 0)
+        { this->delActor(i); continue; }
+        // m_actors[i]->moveBy(x*m_tileSize*m_scale, y*m_tileSize*m_scale);
+    }
+    this->updateScale();
     return true;
 }
 
-void Game::addTile(int x, int y)
-{
-    int i = this->m_map.size();
-    this->m_map.push_back(new Tile(x,y, this->checkerboard));
-    this->m_map[i]->setScale(this->m_scale);
-    this->scene->addItem(this->m_map[i]);
-}
+void Game::setScale(qreal scale) { if(scale >= 0.4 && scale < 1.6)this->m_scale = scale; this->updateScale(); }
 
 int Game::randomUniform(int min, int max)
 /* return single integer selected randomly from <min, max> distributed uniformly */
@@ -303,23 +394,28 @@ bool Game::eventFilter(QObject *object, QEvent *event)
             return true;
 
         case Qt::Key_W:
-            if (this->movActor(NORTH, 0)) return true;
-            else return QObject::eventFilter(object, event);
+            if (this->movPlayer(NORTH))
+                return true;
+            else
+                return QObject::eventFilter(object, event);
 
         case Qt::Key_A:
-            if (this->movActor(WEST, 0)) return true;
-            else return QObject::eventFilter(object, event);
-            return true;
+            if (this->movPlayer(WEST))
+                return true;
+            else
+                return QObject::eventFilter(object, event);
 
         case Qt::Key_S:
-            if (this->movActor(SOUTH, 0)) return true;
-            else return QObject::eventFilter(object, event);
-            return true;
+            if (this->movPlayer(SOUTH))
+                return true;
+            else
+                return QObject::eventFilter(object, event);
 
         case Qt::Key_D:
-            if (this->movActor(EAST, 0)) return true;
-            else return QObject::eventFilter(object, event);
-            return true;
+            if (this->movPlayer(EAST))
+                return true;
+            else
+                return QObject::eventFilter(object, event);
 
         case Qt::Key_E:
             this->rotActor(+1, 0);

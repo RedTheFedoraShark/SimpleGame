@@ -33,12 +33,15 @@ private:
     void rotActor(int dir, int index);
     bool movActor(Directions dir, int index);
     void addTile(int x, int y);
-    void delTile();
+    void addTile(int x, int y, int index);
+    void delTile(int index);
+    void delTile(int begin, int end);
     bool movPlayer(Directions dir);
     void spawnRandom();
     void pathFind();
     void decide();
     bool checkCollide(int index);
+    bool playerWillCollide(int x, int y);
 
 protected:
     bool eventFilter(QObject *object, QEvent *event) override;
