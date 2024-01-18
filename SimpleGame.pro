@@ -34,4 +34,5 @@ RESOURCES += \
 
 DISTFILES += \
     config.json \
+    psudocode.txt \
     todo.txt

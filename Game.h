@@ -20,22 +20,25 @@ private:
     std::vector<Tile *> m_map;
     std::vector<Actor *> m_actors;
     bool checkerboard = false;
+    bool debug = false;
+    bool pause = false;
     QGraphicsScene *scene;
     qreal m_scale;
-    bool debug = false;
+
     /* Methods */
     int randomUniform(int min, int max);
     void updateScale();
     void addActor(Actor *actor);
     void delActor(int index);
     void rotActor(int dir, int index);
-    bool movActor(int dir, int index);
+    bool movActor(Directions dir, int index);
     void addTile(int x, int y);
     void delTile();
     bool movPlayer(Directions dir);
     void spawnRandom();
     void pathFind();
     void decide();
+    bool checkCollide(int index);
 
 protected:
     bool eventFilter(QObject *object, QEvent *event) override;

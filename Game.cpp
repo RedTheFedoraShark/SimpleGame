@@ -89,7 +89,7 @@ void Game::spawnRandom()
     {
         ey = this->randomUniform(0, m_mapSize-1);
         ex = this->randomUniform(0, m_mapSize-1);
-        for(int i = 0; i < m_actors.size(); i++)
+        for(long unsigned int i = 0; i < m_actors.size(); i++)
         {
             if (m_actors[i]->x() == ex && m_actors[i]->y() == ey)
             {
@@ -103,6 +103,20 @@ void Game::spawnRandom()
         }
     }
     this->addActor(new Pawn(ex, ey, m_mapSize/2));
+}
+
+bool Game::checkCollide(int index)
+{
+    for(long unsigned int i = 0; i < m_actors.size(); i++)
+    {
+        if (i == (long unsigned)index)
+            continue;
+        if (m_actors[index]->collidesWithItem(m_actors[i]))
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 void Game::rotActor(int dir, int index)
@@ -129,16 +143,55 @@ void Game::delActor(int index)
     qDebug()<<this->m_actors.size();
 }
 
-bool Game::movActor(int index, Directions dir = NULL)
+bool Game::movActor(Directions dir, int index)
 /* attempt to move actor on index in dir direction. By default move it forwards */
 {
-    if (dir == NULL) dir = m_actors[index]->direction();
-    int px = m_actors[index]->x();
-    int py = m_actors[index]->y();
-//     for (int i = 0; i < m_actors.size(); i++)
-//     {
+    int x, y;
+    // if (dir == NULL) dir = m_actors[0]->direction();
+    // convert dir to x and y modifiers
+    switch (dir)
+    {
+    case NORTH:
+        x = 0; y = -1;
+        break;
 
-//     }
+    case NORTHEAST:
+        x = 1; y = -1;
+        break;
+
+    case EAST:
+        x = 1; y = 0;
+        break;
+
+    case SOUTHEAST:
+        x = 1; y = 1;
+        break;
+
+    case SOUTH:
+        x = 0; y = 1;
+        break;
+
+    case SOUTHWEST:
+        x = -1; y = -1;
+        break;
+
+    case WEST:
+        x = -1; y = 0;
+        break;
+
+    case NORTHWEST:
+        x = -1; y = -1;
+        break;
+
+    default:
+        return false;
+    }
+    // move actor, check if it collided and if true, move it back
+    m_actors[index]->moveBy(x*m_tileSize*m_scale, y*m_tileSize*m_scale);
+    if (!checkCollide(index))
+    { m_actors[index]->moveBy((-x)*m_tileSize*m_scale, (-y)*m_tileSize*m_scale); return false; }
+    m_actors[index]->move(x, y);
+    return true;
 }
 
 bool Game::movPlayer(Directions dir)
@@ -146,12 +199,19 @@ bool Game::movPlayer(Directions dir)
 {
     int x, y;
     // whether to add(true) or remove(false) or leave alone (null) r(ow) or c(olumn) at beg(inning) or end of the square board
-    bool rbeg = NULL, rend = NULL, cbeg = NULL, cend = NULL;
+    // convert dir to x and y modifiers
     switch (dir)
     {
     case NORTH:
         x = 0; y = 1;
-        rbeg = true; rend = false;
+
+        m_map.erase(m_map.size()-mapSize, m_map.size());
+        int x=(RES_X-(mapSize*tileSize*scale()))/2, y=(RES_Y-(mapSize*tileSize*scale()))/2;
+        for(int i = 0; i < mapSize; i++)
+        {
+            m_map.insert(0, new Tile(x, y));
+            x += m_TileSize*m_scale;
+        }
         break;
 
     case NORTHEAST:
@@ -192,17 +252,14 @@ bool Game::movPlayer(Directions dir)
     default:
         return false;
     }
-    for (int i = 1; i < m_actors.size(); i++) // move everyone down
-    {
-        m_actors[i]->move(x, y);
-        if(m_actors[i]->x() >= m_mapSize || m_actors[i]->x() < 0 || m_actors[i]->y() >= m_mapSize || m_actors[i]->y() < 0)
-        { this->delActor(i); continue; }
-        m_actors[i]->moveBy(x*m_tileSize*m_scale, y*m_tileSize*m_scale);
-    }
-    for (int i = 0; i < m_map.size(); i++)
-    {
-        i f (cend){}
-    }
+    // for (long unsigned int i = 1; i < m_actors.size(); i++) // move everyone down
+    // {
+    //     m_actors[i]->move(x, y);
+    //     if(m_actors[i]->x() >= m_mapSize || m_actors[i]->x() < 0 || m_actors[i]->y() >= m_mapSize || m_actors[i]->y() < 0)
+    //     { this->delActor(i); continue; }
+    //     m_actors[i]->moveBy(x*m_tileSize*m_scale, y*m_tileSize*m_scale);
+    // }
+
     return true;
 }
 
@@ -246,15 +303,22 @@ bool Game::eventFilter(QObject *object, QEvent *event)
             return true;
 
         case Qt::Key_W:
-            return true;
+            if (this->movActor(NORTH, 0)) return true;
+            else return QObject::eventFilter(object, event);
 
         case Qt::Key_A:
+            if (this->movActor(WEST, 0)) return true;
+            else return QObject::eventFilter(object, event);
             return true;
 
         case Qt::Key_S:
+            if (this->movActor(SOUTH, 0)) return true;
+            else return QObject::eventFilter(object, event);
             return true;
 
         case Qt::Key_D:
+            if (this->movActor(EAST, 0)) return true;
+            else return QObject::eventFilter(object, event);
             return true;
 
         case Qt::Key_E:

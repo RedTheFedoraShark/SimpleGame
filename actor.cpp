@@ -13,7 +13,7 @@ void Actor::setAP(int AP){ this->m_AP = AP; }
 void Actor::setRange(int range) { this->m_range = range; }
 void Actor::setName(QString name) { this->m_name = name; }
 void Actor::setDirection(Directions direction) { this->m_direction = direction; }
-
+void Actor::move(int x, int y) { this->m_x += x; this->m_y += y;}
 void Actor::turn(int dir)
 {
     if(this->direction() == Directions::NORTH && dir == -1)
