@@ -21,10 +21,7 @@ Game::Game(int tileSize, int mapSize, int RES_X, int RES_Y, QGraphicsScene *scen
             x = (RES_X-(mapSize*tileSize*scale()))/2;
             y += tileSize*scale();
         }
-        this->m_map.push_back(new Tile(x,y, this->checkerboard));
-        this->m_map[i]->setScale(this->m_scale);
-        this->scene->addItem(this->m_map[i]);
-        this->checkerboard = (checkerboard) ? false : true ;
+        this->addTile(x, y);
         x+=tileSize*scale();
     }
 
@@ -173,7 +170,7 @@ bool Game::playerWillCollide(int x, int y)
     for(int i = 1; i < m_actors.size(); i++)
     {
         qDebug()<<"Checking player "<<i;
-        qDebug()<<m_actors[0]->x()<< m_actors[i]->y();
+        qDebug()<<m_actors[0]->x()<< m_actors[0]->y();
         qDebug()<<m_actors[i]->x()<< m_actors[i]->y();
     if (m_actors[0]->x()+x == m_actors[i]->x() &&
         m_actors[0]->y()+y == m_actors[i]->y() ) return true;
@@ -280,10 +277,11 @@ bool Game::movPlayer(Directions dir)
     case SOUTHEAST:
         dx = -1; dy = -1;
         if(this->playerWillCollide(-dx, -dy)) return false;
-        // m_map.erase(m_map.begin(), m_map.begin()+m_mapSize); // remove first row
+        qDebug()<<"Removing first row";
         this->delTile(0, m_mapSize);
-        for (long unsigned int i = 0; i < m_mapSize*m_mapSize; i+=m_mapSize) // for each row remove first cell and add at a new one at the end
+        for (long unsigned int i = 0; i < m_map.size(); i+=m_mapSize) // for each for remove first and add last
         {
+            qDebug() << "removing "<<i;
             this->delTile(i);
             this->addTile(x, y, i+m_mapSize);
         }
@@ -310,7 +308,7 @@ bool Game::movPlayer(Directions dir)
         this->delTile(0, m_mapSize);
         for (long unsigned int i = 0; i < m_mapSize*m_mapSize; i+=m_mapSize) // for each for remove last and add first
         {
-            this->delTile(i+m_mapSize);
+            this->delTile(i+m_mapSize-1);
             this->addTile(x, y, i);
         }
         for(int i = m_map.size(); i < m_mapSize*m_mapSize; i++) // insert a new row at the end
@@ -332,16 +330,14 @@ bool Game::movPlayer(Directions dir)
     case NORTHWEST:
         dx = 1; dy = 1;
         if(this->playerWillCollide(-dx, -dy)) return false;
-        // m_map.erase(m_map.end()-m_mapSize, m_map.end()); // remove last row
-        this->delTile(m_map.size()-m_mapSize, m_map.size());
+        this->delTile(m_map.size()-m_mapSize, m_map.size()); //remove last row
         for (long unsigned int i = 0; i < m_mapSize*m_mapSize; i+=m_mapSize) // for each for remove last and add first
         {
-            this->delTile(i+m_mapSize);
+            this->delTile(i+m_mapSize-1);
             this->addTile(x, y, i);
         }
         for(int i = 0; i < m_mapSize; i++) // insert a row of new tiles at the beginning
         {
-            // Tile *tile = new Tile(x, y, checkerboard);
             this->addTile(x, y, i);
         }
         break;
@@ -383,6 +379,7 @@ bool Game::eventFilter(QObject *object, QEvent *event)
 {
     if (event->type()==QEvent::KeyPress) {
         QKeyEvent* key = (QKeyEvent*)event;
+        bool numpad = key->modifiers() & Qt::KeyboardModifier::KeypadModifier;
         switch(key->key())
         {
         case Qt::Key_Plus:
@@ -393,36 +390,90 @@ bool Game::eventFilter(QObject *object, QEvent *event)
             this->setScale(this->scale()-0.1);
             return true;
 
+        case Qt::Key_8:
+            if (!numpad) break;
+        case Qt::UpArrow:
         case Qt::Key_W:
             if (this->movPlayer(NORTH))
                 return true;
             else
                 return QObject::eventFilter(object, event);
 
-        case Qt::Key_A:
-            if (this->movPlayer(WEST))
+        case Qt::Key_9:
+        case Qt::Key_PageUp:
+        case Qt::Key_E:
+            if (this->movPlayer(NORTHEAST))
                 return true;
             else
                 return QObject::eventFilter(object, event);
 
-        case Qt::Key_S:
-            if (this->movPlayer(SOUTH))
-                return true;
-            else
-                return QObject::eventFilter(object, event);
-
+        case Qt::Key_6:
+            if(!numpad) break;
+        case Qt::RightArrow:
         case Qt::Key_D:
             if (this->movPlayer(EAST))
                 return true;
             else
                 return QObject::eventFilter(object, event);
 
-        case Qt::Key_E:
+        case Qt::Key_3:
+            if(!numpad) break;
+        case Qt::Key_PageDown:
+        case Qt::Key_C:
+            if (this->movPlayer(SOUTHEAST))
+                return true;
+            else
+                return QObject::eventFilter(object, event);
+
+        case Qt::Key_2:
+            if(!numpad) break;
+        case Qt::DownArrow:
+        case Qt::Key_X:
+            if (this->movPlayer(SOUTH))
+                return true;
+            else
+                return QObject::eventFilter(object, event);
+
+        case Qt::Key_1:
+            if(!numpad) break;
+        case Qt::Key_End:
+        case Qt::Key_Z:
+            if (this->movPlayer(SOUTHWEST))
+                return true;
+            else
+                return QObject::eventFilter(object, event);
+
+        case Qt::Key_4:
+            if(!numpad) break;
+        case Qt::LeftArrow:
+        case Qt::Key_A:
+            if (this->movPlayer(WEST))
+                return true;
+            else
+                return QObject::eventFilter(object, event);
+
+        case Qt::Key_7:
+            if(!numpad) break;
+        case Qt::Key_Home:
+        case Qt::Key_Q:
+            if (this->movPlayer(SOUTH))
+                return true;
+            else
+                return QObject::eventFilter(object, event);
+
+        case Qt::Key_Comma:
+        case Qt::Key_T:
             this->rotActor(+1, 0);
             return true;
 
-        case Qt::Key_Q:
+        case Qt::Key_0:
+            if(!numpad) break;
+        case Qt::Key_R:
             this->rotActor(-1, 0);
+            return true;
+
+        case Qt::Key_Escape:
+            this->pause = (this->pause)? false : true;
             return true;
 
         case Qt::Key_F12: // turn on debug mode
@@ -451,5 +502,5 @@ bool Game::eventFilter(QObject *object, QEvent *event)
     } else {
         return QObject::eventFilter(object, event);
     }
-    return false;
+    return QObject::eventFilter(object, event);
 }

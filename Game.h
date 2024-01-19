@@ -42,6 +42,7 @@ private:
     void decide();
     bool checkCollide(int index);
     bool playerWillCollide(int x, int y);
+    void toggleMenu();
 
 protected:
     bool eventFilter(QObject *object, QEvent *event) override;
