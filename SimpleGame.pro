@@ -11,6 +11,7 @@ CONFIG += c++17
 SOURCES += \
     Game.cpp \
     actor.cpp \
+    enums.cpp \
     gamelog.cpp \
     main.cpp \
     tile.cpp

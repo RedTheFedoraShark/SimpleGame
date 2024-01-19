@@ -13,10 +13,11 @@ class Game: public QObject{
     Q_PROPERTY(std::vector<Tile *> map READ map FINAL)
     Q_PROPERTY(std::vector<Actor *> actors READ actors FINAL)
     Q_PROPERTY(qreal scale READ scale WRITE setScale NOTIFY scaleChanged FINAL)
+    /* above macro declarations are legacy code, however I wish not to have to deal with deleting them in case something breaks. */
 private:
     /* Members */
-    int RES_X, RES_Y;
-    int m_mapSize, m_tileSize, player_score;
+    int RES_X, RES_Y;  // global resolution values, it's the size default resolution and size of scene, as well as minimum size of the window
+    int m_mapSize, m_tileSize, player_score; // size of a single row, size of a side of a single tile and current player score
     std::vector<Tile *> m_map;
     std::vector<Actor *> m_actors;
     bool checkerboard = false;
@@ -39,10 +40,14 @@ private:
     bool movPlayer(Directions dir);
     void spawnRandom();
     void pathFind();
-    void decide();
+    void decide(int index);
     bool checkCollide(int index);
     bool playerWillCollide(int x, int y);
+    bool actorWillCollide(int x, int y, int index);
     void toggleMenu();
+    void nextTurn();
+    void actorAttack(int index);
+    int findDir(int vx, int vy, int wx, int wy);
 
 protected:
     bool eventFilter(QObject *object, QEvent *event) override;

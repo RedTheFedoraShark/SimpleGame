@@ -34,6 +34,7 @@ Game::Game(int tileSize, int mapSize, int RES_X, int RES_Y, QGraphicsScene *scen
 void Game::updateScale()
 /* update all tiles' and actors' scale */
 {
+    /* x and y are coordinates of an intersection point between left and top margins' border. Yes, they do go negative with bigger scales. */
     int x=round((RES_X-(m_mapSize*m_tileSize*m_scale))/2);
     int y=round((RES_Y-(m_mapSize*m_tileSize*m_scale))/2);
     for (int i = 0; i < m_mapSize*m_mapSize; i++)
@@ -99,18 +100,149 @@ void Game::spawnRandom()
     this->addActor(new Pawn(ex, ey, m_mapSize/2));
 }
 
-bool Game::checkCollide(int index)
+void Game::decide(int index)
+/* for actor at index decide their next action */
 {
-    for(long unsigned int i = 0; i < m_actors.size(); i++)
+
+    /*
+     * Default enemy logic:
+     * Ensure I am in a straight line from the player, then turn towards them, move in range and murder.
+    */
+
+    /* calculate direction vector from actor at [index] to player */
+    int vx = m_actors[0]->x() - m_actors[index]->x();
+    int vy = m_actors[0]->y() - m_actors[index]->y();
+    /*get facing direction vector for actor*/
+    std::vector<int> w = directionVector(m_actors[index]->direction());
+
+    if (vx == 0 || vy == 0 || vx*vx == vy*vy)
+    /* if enemy is in a straight line from player */
     {
-        if (i == (long unsigned)index)
+        if (vx/abs(vx) == w[0] && vy/abs(vy) == w[1])
+        /* check if actor is staring right at the player */
+        {
+            if (vx*vx+vy*vy == m_actors[index]->range()*m_actors[index]->range())
+            /* check if player is within actor's range */
+            {
+                for (int i = 1; i < m_actors[index]->range(); i++)
+                /* check if anyone's standing in the way */
+                {
+                    if (this->actorWillCollide(vx*i, vy*i, index))
+                    {
+                        //just wait
+                        return;
+                    }
+                }
+                // attack the player. Essentially game over.
+            }
+            else
+            /* player is not in range, so move up */
+                this->movActor(m_actors[index]->direction(), index);
+        }
+        else
+        /* actor is not staring at the player, so turn towards them */
+        {
+            int dir = this->findDir(vx, vy, w[0], w[1]);
+            this->rotActor(dir, index);
+        }
+    }
+    else
+    /* enemy not in a straight line to player */
+    {
+        if ((w[0]*vx >= 0 && w[1]*vy > 0) || (w[0]*vx > 0 && w[1]*vy >= 0))
+        /* check if actor is facing the player's direction */
+        {
+            /* move towards the player */
+            this->movActor(m_actors[index]->direction(), index);
+        }
+        else
+        /* actor not facing the player, therefore turn */
+        {
+            int dir = this->findDir(vx, vy, w[0], w[1]);
+            this->rotActor(dir, index);
+        }
+    }
+
+}
+
+bool Game::playerWillCollide(int x, int y)
+/* check whether player will collide with any other actor after moving in [x,y] direction */
+{
+    for(int i = 1; i < m_actors.size(); i++)
+    {
+        if (m_actors[0]->x()+x == m_actors[i]->x() &&
+            m_actors[0]->y()+y == m_actors[i]->y() ) return true;
+    }
+    return false;
+}
+
+bool Game::actorWillCollide(int x, int y, int index)
+/* check whether actor will collide with any other actor after moving in [x,y] direction */
+{
+    for(int i = 0; i < m_actors.size(); i++)
+    {
+        if (i == index)
+            continue;
+        if (m_actors[index]->x()+x == m_actors[i]->x() &&
+            m_actors[index]->y()+y == m_actors[i]->y() ) return true;
+    }
+    return false;
+}
+
+void Game::nextTurn()
+{
+
+}
+
+void Game::actorAttack(int index)
+/* actor at index attacks; check who was hit and, if player attacked, update player score */
+{
+    std::vector<int> v = directionVector(m_actors[index]->direction());
+    for (int i = 1; i <= m_actors[index]->range(); i++) // i is the range checked now
+    {
+        /* yes, this is a loop from this->actorWillCollide(), but to not make two loops through actors,
+         * I would rather write it again. I know I could refactor that code. I can't be bothered. */
+        for(int j = 0; j < m_actors.size(); j++) // j is index of checked actor
+        {
+            if (j == index)
+                continue;
+            if (m_actors[index]->x()+i*v[0] == m_actors[j]->x() &&
+                m_actors[index]->y()+i*v[1] == m_actors[j]->y() )
+                /* if currently checked enemy is hit */
+            {
+                if (index == 0) this->player_score += m_actors[j]->points();
+                this->delActor(j);
+                return;
+            }
+        }
+    }
+}
+
+int Game::findDir(int vx, int vy, int wx, int wy)
+/* calculate sin of angle between vectors v and w and return whether to turn left or right */
+{
+    int vw = vx*wx+vy*wy; // dot product of v and w
+    qreal vl = sqrt(vx*vx + vy*vy); // length of v
+    qreal wl = sqrt(wx*wx + wy*wy); // length of w
+    qreal cosa = vw/(vl*wl); // cos of a, where a is angle between v and w
+    qreal sina = sqrt(1-cosa*cosa); // sin of a, where a is angle between v and w
+    /* if sin of a is negative, a > 180*, therefore turn left, else turn right */
+    return (sina < 0) ? -1 : 1;
+}
+
+bool Game::checkCollide(int index)
+/* check whether actor at [index] is colliding with any other actor */
+{
+    for(int i = 0; i < m_actors.size(); i++)
+    {
+        if (i == index)
             continue;
         if (m_actors[index]->collidesWithItem(m_actors[i]))
         {
-            return false;
+            return true;
         }
     }
-    return true;
+    return false;
 }
 
 void Game::rotActor(int dir, int index)
@@ -127,6 +259,7 @@ void Game::delActor(int index)
 }
 
 void Game::addTile(int x, int y)
+/* push back a tile and add it to the scene */
 {
     int i = this->m_map.size();
     this->m_map.push_back(new Tile(x,y, this->checkerboard));
@@ -136,6 +269,7 @@ void Game::addTile(int x, int y)
 }
 
 void Game::addTile(int x, int y, int index)
+/* insert a new tile at index and add it to the scene */
 {
     if (index >= this->m_map.size())
     {
@@ -151,80 +285,33 @@ void Game::addTile(int x, int y, int index)
 }
 
 void Game::delTile(int index)
+/* remove tile at index from scene and delete it */
 {
-    this->scene->removeItem(this->m_map[index]);
+    try { this->scene->removeItem(this->m_map[index]); }
+    catch (...) { qDebug()<<"That;s a funny error!"; }
     this->m_map.erase(m_map.begin()+index);
 }
 
 void Game::delTile(int begin, int end)
+/* remove tiles with indexes within range <begin, end) from scene and delete them */
 {
     for(int i = begin; i < end; i++)
     {
-        this->scene->removeItem(this->m_map[i]);
+        try { this->scene->removeItem(this->m_map[i]); }
+        catch (...) { qDebug()<<"That;s a funny error!"; }
     }
     this->m_map.erase(m_map.begin()+begin, m_map.begin()+end);
 }
 
-bool Game::playerWillCollide(int x, int y)
-{
-    for(int i = 1; i < m_actors.size(); i++)
-    {
-        qDebug()<<"Checking player "<<i;
-        qDebug()<<m_actors[0]->x()<< m_actors[0]->y();
-        qDebug()<<m_actors[i]->x()<< m_actors[i]->y();
-    if (m_actors[0]->x()+x == m_actors[i]->x() &&
-        m_actors[0]->y()+y == m_actors[i]->y() ) return true;
-    }
-    return false;
-}
-
 bool Game::movActor(Directions dir, int index)
-/* attempt to move actor on index in dir direction. By default move it forwards */
+/* attempt to move actor on index in dir direction.*/
 {
-    int x, y; // init relative x and y by which actor shall be moved
-    // convert Directions to x and y modifiers
-    switch (dir)
-    {
-    case NORTH:
-        x = 0; y = -1;
-        break;
-
-    case NORTHEAST:
-        x = 1; y = -1;
-        break;
-
-    case EAST:
-        x = 1; y = 0;
-        break;
-
-    case SOUTHEAST:
-        x = 1; y = 1;
-        break;
-
-    case SOUTH:
-        x = 0; y = 1;
-        break;
-
-    case SOUTHWEST:
-        x = -1; y = -1;
-        break;
-
-    case WEST:
-        x = -1; y = 0;
-        break;
-
-    case NORTHWEST:
-        x = -1; y = -1;
-        break;
-
-    default:
-        return false;
-    }
+    std::vector<int> v = directionVector(dir);
     // move actor, check if it collided and if true, move it back
-    m_actors[index]->moveBy(x*m_tileSize*m_scale, y*m_tileSize*m_scale);
-    if (!checkCollide(index))
-    { m_actors[index]->moveBy((-x)*m_tileSize*m_scale, (-y)*m_tileSize*m_scale); return false; }
-    m_actors[index]->move(x, y);
+    m_actors[index]->moveBy(v[0]*m_tileSize*m_scale, v[1]*m_tileSize*m_scale);
+    if (checkCollide(index))
+    { m_actors[index]->moveBy((-v[0])*m_tileSize*m_scale, (-v[1])*m_tileSize*m_scale); return false; }
+    m_actors[index]->move(v[0], v[1]);
     return true;
 }
 
@@ -303,13 +390,19 @@ bool Game::movPlayer(Directions dir)
         break;
 
     case SOUTHWEST:
-        dx = 1; dy = 1;
+        dx = 1; dy = -1;
         if(this->playerWillCollide(-dx, -dy)) return false;
+        qDebug()<<"before deleting first row";
         this->delTile(0, m_mapSize);
-        for (long unsigned int i = 0; i < m_mapSize*m_mapSize; i+=m_mapSize) // for each for remove last and add first
+        qDebug()<<"after deleting first row";
+        for (long unsigned int i = 0; i < m_map.size(); i+=m_mapSize) // for each for remove last and add first
         {
+            qDebug()<<"Size of map "<<m_map.size();
+            qDebug()<<"deleting tile "<<i+m_mapSize-1;
             this->delTile(i+m_mapSize-1);
+            qDebug()<<"adding a tile before "<< i;
             this->addTile(x, y, i);
+            qDebug()<<"added a tile";
         }
         for(int i = m_map.size(); i < m_mapSize*m_mapSize; i++) // insert a new row at the end
         {
@@ -331,7 +424,7 @@ bool Game::movPlayer(Directions dir)
         dx = 1; dy = 1;
         if(this->playerWillCollide(-dx, -dy)) return false;
         this->delTile(m_map.size()-m_mapSize, m_map.size()); //remove last row
-        for (long unsigned int i = 0; i < m_mapSize*m_mapSize; i+=m_mapSize) // for each for remove last and add first
+        for (long unsigned int i = 0; i < m_map.size(); i+=m_mapSize) // for each for remove last and add first
         {
             this->delTile(i+m_mapSize-1);
             this->addTile(x, y, i);
@@ -368,20 +461,24 @@ int Game::randomUniform(int min, int max)
 }
 
 
-int Game::mapSize() { return this->m_mapSize; }
-qreal Game::scale() { return this->m_scale; }
-std::vector<Tile *> Game::map() { return this->m_map; }
-
-std::vector<Actor *> Game::actors() { return this->m_actors; }
+int Game::mapSize() { return this->m_mapSize; } // return size of a single row/column
+qreal Game::scale() { return this->m_scale; } // return scale
+std::vector<Tile *> Game::map() { return this->m_map; } // return the map vector
+std::vector<Actor *> Game::actors() { return this->m_actors; } // return the ators vector
 
 bool Game::eventFilter(QObject *object, QEvent *event)
-/* handle event recieved from view, used for detecting user input */
+/* handle event forwarded from view, used for detecting user input */
 {
     if (event->type()==QEvent::KeyPress) {
         QKeyEvent* key = (QKeyEvent*)event;
-        bool numpad = key->modifiers() & Qt::KeyboardModifier::KeypadModifier;
+        bool numpad = key->modifiers() & Qt::KeyboardModifier::KeypadModifier; // bit AND to check if the key belongs to NUMPAD
         switch(key->key())
         {
+
+        case Qt::Key_Space:
+            this->actorAttack(0);
+            return true;
+
         case Qt::Key_Plus:
             this->setScale(this->scale()+0.1);
             return true;
@@ -456,10 +553,16 @@ bool Game::eventFilter(QObject *object, QEvent *event)
             if(!numpad) break;
         case Qt::Key_Home:
         case Qt::Key_Q:
-            if (this->movPlayer(SOUTH))
+            if (this->movPlayer(NORTHWEST))
                 return true;
             else
                 return QObject::eventFilter(object, event);
+
+        case Qt::Key_5:
+            if(!numpad) break;
+        case Qt::Key_S:
+            this->nextTurn();
+            break;
 
         case Qt::Key_Comma:
         case Qt::Key_T:

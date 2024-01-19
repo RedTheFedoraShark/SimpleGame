@@ -1,10 +1,11 @@
 #include "actor.h"
 
-Actor::Actor() { this->m_direction = NORTH; }
+Actor::Actor(int points) { this->m_direction = NORTH; this->m_points = points;}
 int Actor::x() { return this->m_x; }
 int Actor::y() { return this->m_y; }
 int Actor::AP() { return this->m_AP; }
 int Actor::range() { return this->m_range; }
+int Actor::points() { return this->m_points; }
 QString Actor::name() { return this->m_name; }
 Directions Actor::direction() { return this->m_direction;}
 void Actor::setX(int x) { this->m_x = x; }
@@ -16,40 +17,41 @@ void Actor::setDirection(Directions direction) { this->m_direction = direction; 
 void Actor::move(int x, int y) { this->m_x += x; this->m_y += y;}
 void Actor::turn(int dir)
 {
-    if(this->direction() == Directions::NORTH && dir == -1)
-        this->setDirection(Directions::NORTHWEST);
-    else if (this->direction() == Directions::NORTHWEST && dir == 1)
-        this->setDirection(Directions::NORTH);
-    else
-        this->setDirection(Directions(this->direction()+dir));
-
-    // this->setRotation(this->rotation()+dir*45);
+    this->setDirection(Directions((this->direction()+dir) % 8));
 }
 
-Player::Player(int posx, int posy)
+Player::Player(int posx, int posy) : Actor(0)
 {
     this->setX(posx);
     this->setY(posy);
 }
 
-Enemy::Enemy(int posx, int posy, int middle)
+Enemy::Enemy(int posx, int posy, int middle, int points) : Actor(points)
 {
     this->setX(posx);
     this->setY(posy);
     this->middle = middle;
-    // int dirX = middle - posx;
-    // int dirY = middle - posy;
-    this->setDirection(NORTH);
-    // this->setDirection();
+    int vx = (middle - posx)/abs(middle - posx);
+    int vy = (middle - posy)/abs(middle - posy);
+    Directions dir;
+    /* following conversion of vector of direction to direction enum seems random.
+     * It it not. I just spent 10 minutes analysing an A5 page filled with calculations.
+     * it's just substracting vector's members from a constant depending on vy */
+    if (vy < 0) dir = Directions(9-vx-vy);
+    else if (vy > 0) dir = Directions(5-vx-vy);
+    else dir = Directions(4-2*vx);
+    this->setDirection(dir);
 }
+
 
 Test_Player::Test_Player(int posx, int posy) : Player(posx, posy)
 {
     this->setPixmap(QPixmap(":/gfx/blueactor.png"));
 }
 
-Pawn::Pawn(int posx, int posy, int middle) : Enemy(posx, posy, middle)
+Pawn::Pawn(int posx, int posy, int middle) : Enemy(posx, posy, middle, 100)
 {
     this->setPixmap(QPixmap(":/gfx/blueactor.png"));
+
 }
 

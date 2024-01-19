@@ -1,6 +1,5 @@
 // #include "mainwindow.h"
 #include "Game.h"
-#include "tile.h"
 #include <QApplication>
 #include <QGraphicsView>
 #include <QGraphicsScene>
@@ -21,9 +20,6 @@ int main(int argc, char *argv[])
     view->installEventFilter(game);
     view->setMinimumWidth(RES_X);
     view->setMinimumHeight(RES_Y);
-    // view->resize(805, 605);
-    // view->setFixedSize(805, 605);
-    // view->setMinimumSize();
     view->setSceneRect(0, 0, RES_X - 5,  RES_Y - 5);
     view->setBackgroundBrush(Qt::black);
     view->show();

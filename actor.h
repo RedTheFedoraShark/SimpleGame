@@ -1,5 +1,6 @@
 #ifndef ACTOR_H
 #define ACTOR_H
+
 #include "enums.h"
 #include <QObject>
 #include <QGraphicsPixmapItem>
@@ -14,15 +15,17 @@ private:
     Q_PROPERTY(int range READ range WRITE setRange FINAL)
     Q_PROPERTY(QString name READ name WRITE setName FINAL)
     Q_PROPERTY(Directions direction READ direction WRITE setDirection FINAL)
-    int m_x, m_y, m_AP, m_range;
+    Q_PROPERTY(int points READ points FINAL)
+    int m_x, m_y, m_AP, m_range, m_points;
     Directions m_direction;
     QString m_name;
 public:
-    Actor();
+    Actor(int points);
     void move(int x, int y);
     int x();
     int y();
     int AP();
+    int points();
     int range();
     QString name();
     Directions direction();
@@ -53,7 +56,7 @@ class Enemy: public Actor
 private:
     int middle;
 public:
-    Enemy(int posx, int posy, int middle);
+    Enemy(int posx, int posy, int middle, int points);
 };
 
 class Pawn: public Enemy
