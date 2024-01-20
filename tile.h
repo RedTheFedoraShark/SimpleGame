@@ -8,7 +8,7 @@ class Tile: public QGraphicsPixmapItem
 private:
     bool full;
 public:
-    Tile(int posx, int posy, bool checker);
+    Tile(int posx, int posy, int num);
 };
 
 #endif // TILE_H

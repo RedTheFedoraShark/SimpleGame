@@ -20,6 +20,7 @@ private:
     Directions m_direction;
     QString m_name;
 public:
+    QPixmap originalMap;
     Actor(int points);
     void move(int x, int y);
     int x();

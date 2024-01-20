@@ -1,11 +1,11 @@
 #include "tile.h"
 
 
-Tile::Tile(int posx, int posy, bool checker)
+Tile::Tile(int posx, int posy, int num)
 {
-    if (checker)
-        this->setPixmap(QPixmap(":/gfx/whitetile.png"));
-    else
-        this->setPixmap(QPixmap(":/gfx/blacktile.png"));
+    QString path = ":/gfx/grass";
+    QString n = QString::number(num);
+    QString ext = ".png";
+    this->setPixmap(QPixmap(QString(path+n+ext)));
     this->setPos(posx, posy);
 }

@@ -8,6 +8,8 @@
 Game::Game(int tileSize, int mapSize, int RES_X, int RES_Y, QGraphicsScene *scene)
 {
     // init globals
+    this->player_score = 0;
+    this->spawnTimer = 2;
     this->RES_X = RES_X; this->RES_Y = RES_Y;
     this->m_scale = 1.0;
     this->scene = scene;
@@ -29,6 +31,31 @@ Game::Game(int tileSize, int mapSize, int RES_X, int RES_Y, QGraphicsScene *scen
     this->addActor(new Test_Player(mapSize/2, mapSize/2));
     // init first enemy
     this->spawnRandom();
+    this->addScoreCounter();
+}
+
+void Game::addScoreCounter()
+{
+    this->scoreCounter = new gameTextItem();
+    this->updateScoreCounter();
+    this->scene->addItem(scoreCounter);
+    this->scoreCounter->setZValue(1000);
+    this->updateScoreCounterPosition();
+}
+
+void Game::updateScoreCounter()
+{
+    QString a = "Player score: ";
+    QString b = QString::number(this->player_score);
+    QString c = a + b;
+    this->scoreCounter->setText(c);
+}
+
+void Game::updateScoreCounterPosition()
+{
+    int x = this->m_map[0]->x();
+    int y = this->m_map[0]->y();
+    this->scoreCounter->setPos(x, y-m_tileSize*m_scale);
 }
 
 void Game::updateScale()
@@ -44,7 +71,6 @@ void Game::updateScale()
             x=round((RES_X-(m_mapSize*m_tileSize*m_scale))/2);
             y += round(m_tileSize*scale());
         }
-        // qDebug() << x << ";" << y <<"\n";
         this->m_map[i]->setScale(scale());
         this->m_map[i]->setPos(x, y);
         this->m_map[i]->setZValue(0);
@@ -58,9 +84,10 @@ void Game::updateScale()
         y = (RES_Y-m_mapSize*m_tileSize*scale())/2 + (m_actors[i]->y())*m_tileSize*scale();
         this->m_actors[i]->setPos(x, y);
         this->m_actors[i]->setZValue(1);
+        this->m_actors[i]->turn(0);
     }
+    this->updateScoreCounterPosition();
 }
-
 
 void Game::addActor(Actor *actor)
 /* spawn a specified actor */
@@ -73,11 +100,13 @@ void Game::addActor(Actor *actor)
     int x = (RES_X-m_mapSize*m_tileSize*scale())/2 + m_actors[i]->x()*m_tileSize*scale();
     int y = (RES_Y-m_mapSize*m_tileSize*scale())/2 + m_actors[i]->y()*m_tileSize*scale();
     this->m_actors[i]->setPos(x, y);
+    this->m_actors[i]->turn(0);
 }
 
 void Game::spawnRandom()
 /* spawn a Pawn enemy on random unoccupied tile*/
 {
+    if (this->debug && m_actors.size() >= m_mapSize*m_mapSize) return; // prevents some crashing
     int ex, ey;
     bool loop = true;
     while (loop) // make sure enemy won't be generated on top of the player
@@ -114,14 +143,16 @@ void Game::decide(int index)
     int vy = m_actors[0]->y() - m_actors[index]->y();
     /*get facing direction vector for actor*/
     std::vector<int> w = directionVector(m_actors[index]->direction());
-
     if (vx == 0 || vy == 0 || vx*vx == vy*vy)
     /* if enemy is in a straight line from player */
     {
-        if (vx/abs(vx) == w[0] && vy/abs(vy) == w[1])
+        /* calculate standardised coordinates (in this case vx and vy == 1) beforehand, otherwise 0/0=1*/
+        int sx = (vx == 0) ? 0 : vx/abs(vx);
+        int sy = (vy == 0) ? 0 : vy/abs(vy);
+        if (sx == w[0] && sy == w[1])
         /* check if actor is staring right at the player */
         {
-            if (vx*vx+vy*vy == m_actors[index]->range()*m_actors[index]->range())
+            if ((int)sqrt(vx*vx+vy*vy) == (int)sqrt(m_actors[index]->range()*m_actors[index]->range())) // cast this to int, just so for square roots of 2 etc (diagonals) range still counts as 1
             /* check if player is within actor's range */
             {
                 for (int i = 1; i < m_actors[index]->range(); i++)
@@ -134,6 +165,9 @@ void Game::decide(int index)
                     }
                 }
                 // attack the player. Essentially game over.
+                if (this->spawnTimer<=0) this->spawnTimer = 2; // resetting the timer in the event of death. Prevents some crashing.
+                emit this->gameOver();
+                return;
             }
             else
             /* player is not in range, so move up */
@@ -191,6 +225,21 @@ bool Game::actorWillCollide(int x, int y, int index)
 
 void Game::nextTurn()
 {
+    for (int i = 1; i < this->m_actors.size(); i++)
+    {
+        this->decide(i);
+        this->scene->update();
+    }
+    // for surviving another turn you deserve a single point
+    this->player_score += 1;
+    this->updateScoreCounter();
+
+    if (this->spawnTimer <= 0)
+    {
+        this->spawnRandom();
+        this->spawnTimer = 2;
+    }
+    else this->spawnTimer--;
 
 }
 
@@ -210,24 +259,25 @@ void Game::actorAttack(int index)
                 m_actors[index]->y()+i*v[1] == m_actors[j]->y() )
                 /* if currently checked enemy is hit */
             {
-                if (index == 0) this->player_score += m_actors[j]->points();
+                if (index == 0)
+                { this->player_score += m_actors[j]->points(); this->updateScoreCounter(); }
                 this->delActor(j);
                 return;
             }
         }
     }
+    this->scene->update();
+    if (index == 0) this->nextTurn();
 }
 
 int Game::findDir(int vx, int vy, int wx, int wy)
-/* calculate sin of angle between vectors v and w and return whether to turn left or right */
+/* ~ I leave this lengthly comment here in case I need to remember how the hell I did it because I will forget in 20 minutes.
+ * A small adventure into 3D. This calculates the cross product of v and w (let's call it c), which is a vector orthogonal to both v and w.
+ * In this case v and w lie on the same plane, therefore c lies somewhere on the Z axis. Length of c depends on the sine of the angle between v and w.
+ * When sine is positive, z is positive, angle < 180. For 180 it assumes 0 and then for angles greater than 180, norm of c is negative.*/
 {
-    int vw = vx*wx+vy*wy; // dot product of v and w
-    qreal vl = sqrt(vx*vx + vy*vy); // length of v
-    qreal wl = sqrt(wx*wx + wy*wy); // length of w
-    qreal cosa = vw/(vl*wl); // cos of a, where a is angle between v and w
-    qreal sina = sqrt(1-cosa*cosa); // sin of a, where a is angle between v and w
-    /* if sin of a is negative, a > 180*, therefore turn left, else turn right */
-    return (sina < 0) ? -1 : 1;
+    int zx = vx*wy-wx*vy; // z coordinate of cross product of v and w in 3D space
+    return (zx >= 0) ? -1 : 1;
 }
 
 bool Game::checkCollide(int index)
@@ -249,6 +299,7 @@ void Game::rotActor(int dir, int index)
 /* turn actor[index] by 1 step (45 degrees) in dir direction */
 {
     this->m_actors[index]->turn(dir);
+    if (index == 0) this->nextTurn();
 }
 
 void Game::delActor(int index)
@@ -262,8 +313,7 @@ void Game::addTile(int x, int y)
 /* push back a tile and add it to the scene */
 {
     int i = this->m_map.size();
-    this->m_map.push_back(new Tile(x,y, this->checkerboard));
-    this->checkerboard = (this->checkerboard) ? false : true;
+    this->m_map.push_back(new Tile(x,y, this->randomUniform(1, 3)));
     this->m_map[i]->setScale(this->m_scale);
     this->scene->addItem(this->m_map[i]);
 }
@@ -277,8 +327,7 @@ void Game::addTile(int x, int y, int index)
     }
     else
     {
-        this->m_map.insert(m_map.begin()+index, new Tile(x,y, this->checkerboard));
-        this->checkerboard = (this->checkerboard) ? false : true;
+        this->m_map.insert(m_map.begin()+index, new Tile(x,y, this->randomUniform(1,3)));
         this->m_map[index]->setScale(this->m_scale);
         this->scene->addItem(this->m_map[index]);
     }
@@ -364,11 +413,9 @@ bool Game::movPlayer(Directions dir)
     case SOUTHEAST:
         dx = -1; dy = -1;
         if(this->playerWillCollide(-dx, -dy)) return false;
-        qDebug()<<"Removing first row";
         this->delTile(0, m_mapSize);
         for (long unsigned int i = 0; i < m_map.size(); i+=m_mapSize) // for each for remove first and add last
         {
-            qDebug() << "removing "<<i;
             this->delTile(i);
             this->addTile(x, y, i+m_mapSize);
         }
@@ -392,17 +439,11 @@ bool Game::movPlayer(Directions dir)
     case SOUTHWEST:
         dx = 1; dy = -1;
         if(this->playerWillCollide(-dx, -dy)) return false;
-        qDebug()<<"before deleting first row";
         this->delTile(0, m_mapSize);
-        qDebug()<<"after deleting first row";
         for (long unsigned int i = 0; i < m_map.size(); i+=m_mapSize) // for each for remove last and add first
         {
-            qDebug()<<"Size of map "<<m_map.size();
-            qDebug()<<"deleting tile "<<i+m_mapSize-1;
             this->delTile(i+m_mapSize-1);
-            qDebug()<<"adding a tile before "<< i;
             this->addTile(x, y, i);
-            qDebug()<<"added a tile";
         }
         for(int i = m_map.size(); i < m_mapSize*m_mapSize; i++) // insert a new row at the end
         {
@@ -446,10 +487,24 @@ bool Game::movPlayer(Directions dir)
         // m_actors[i]->moveBy(x*m_tileSize*m_scale, y*m_tileSize*m_scale);
     }
     this->updateScale();
+    this->scene->update();
+    this->nextTurn();
     return true;
 }
 
 void Game::setScale(qreal scale) { if(scale >= 0.4 && scale < 1.6)this->m_scale = scale; this->updateScale(); }
+
+int Game::getScore() { return this->player_score; }
+
+void Game::cleanUp()
+{
+    for (int i = this->m_actors.size()-1; i >= 0; i--)
+    {
+        this->delActor(i);
+    }
+    this->delTile(0, m_map.size());
+    this->scene->removeItem(this->scoreCounter);
+}
 
 int Game::randomUniform(int min, int max)
 /* return single integer selected randomly from <min, max> distributed uniformly */

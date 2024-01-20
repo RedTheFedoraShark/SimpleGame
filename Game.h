@@ -2,6 +2,7 @@
 #define GAME_H
 
 #include "actor.h"
+#include "gametextitem.h"
 #include "tile.h"
 #include <vector>
 #include <QObject>
@@ -12,7 +13,7 @@ class Game: public QObject{
     Q_PROPERTY(int mapSize READ mapSize FINAL)
     Q_PROPERTY(std::vector<Tile *> map READ map FINAL)
     Q_PROPERTY(std::vector<Actor *> actors READ actors FINAL)
-    Q_PROPERTY(qreal scale READ scale WRITE setScale NOTIFY scaleChanged FINAL)
+    Q_PROPERTY(qreal scale READ scale WRITE setScale FINAL)
     /* above macro declarations are legacy code, however I wish not to have to deal with deleting them in case something breaks. */
 private:
     /* Members */
@@ -20,12 +21,12 @@ private:
     int m_mapSize, m_tileSize, player_score; // size of a single row, size of a side of a single tile and current player score
     std::vector<Tile *> m_map;
     std::vector<Actor *> m_actors;
-    bool checkerboard = false;
     bool debug = false;
     bool pause = false;
     QGraphicsScene *scene;
     qreal m_scale;
-
+    gameTextItem *scoreCounter;
+    int spawnTimer;
     /* Methods */
     int randomUniform(int min, int max);
     void updateScale();
@@ -48,6 +49,9 @@ private:
     void nextTurn();
     void actorAttack(int index);
     int findDir(int vx, int vy, int wx, int wy);
+    void addScoreCounter();
+    void updateScoreCounter();
+    void updateScoreCounterPosition();
 
 protected:
     bool eventFilter(QObject *object, QEvent *event) override;
@@ -60,8 +64,10 @@ public:
     std::vector<Actor *> actors();
     // void update_scene();
     void setScale(qreal scale);
+    int getScore();
+    void cleanUp();
 signals:
-    void scaleChanged();
+    void gameOver();
 };
 
 #endif // GAME_H

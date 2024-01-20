@@ -12,16 +12,18 @@ SOURCES += \
     Game.cpp \
     actor.cpp \
     enums.cpp \
-    gamelog.cpp \
+    gametextitem.cpp \
     main.cpp \
-    tile.cpp
+    tile.cpp \
+    window.cpp
 
 HEADERS += \
     Game.h \
     actor.h \
     enums.h \
-    gamelog.h \
-    tile.h
+    gametextitem.h \
+    tile.h \
+    window.h
 
 FORMS +=
 
@@ -37,3 +39,5 @@ DISTFILES += \
     config.json \
     psudocode.txt \
     todo.txt
+
+RC_ICONS = game.ico

@@ -3,6 +3,11 @@
         <file>blacktile.png</file>
         <file>blueactor.png</file>
         <file>whitetile.png</file>
+        <file>blue_knight.png</file>
+        <file>goblin.png</file>
+        <file>grass1.png</file>
+        <file>grass2.png</file>
+        <file>grass3.png</file>
     </qresource>
     <qresource prefix="/"/>
 </RCC>

@@ -1,4 +1,6 @@
 #include "enums.h"
+#include "qdebug.h"
+#include "qlogging.h"
 
 std::vector<int> directionVector(Directions dir)
 {
@@ -27,7 +29,7 @@ std::vector<int> directionVector(Directions dir)
             break;
 
         case SOUTHWEST:
-            v[0] = -1; v[1] = -1;
+            v[0] = -1; v[1] = 1;
             break;
 
         case WEST:
@@ -41,6 +43,7 @@ std::vector<int> directionVector(Directions dir)
         default:
             break;
         }
-        return {v[0], v[1]};
+        return v;
+
     }
 }
