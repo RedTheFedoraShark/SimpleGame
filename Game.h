@@ -41,7 +41,6 @@ private:
     bool movPlayer(Directions dir);
     void spawnRandom();
     void pathFind();
-    void decide(int index);
     bool checkCollide(int index);
     bool playerWillCollide(int x, int y);
     bool actorWillCollide(int x, int y, int index);
@@ -52,6 +51,7 @@ private:
     void addScoreCounter();
     void updateScoreCounter();
     void updateScoreCounterPosition();
+    void decide(int index);
 
 protected:
     bool eventFilter(QObject *object, QEvent *event) override;
@@ -66,6 +66,7 @@ public:
     void setScale(qreal scale);
     int getScore();
     void cleanUp();
+
 signals:
     void gameOver();
 };

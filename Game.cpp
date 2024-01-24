@@ -106,7 +106,7 @@ void Game::addActor(Actor *actor)
 void Game::spawnRandom()
 /* spawn a Pawn enemy on random unoccupied tile*/
 {
-    if (this->debug && m_actors.size() >= m_mapSize*m_mapSize) return; // prevents some crashing
+    if (this->debug && m_actors.size() >= (m_mapSize*m_mapSize)-8) return; // prevents some crashing
     int ex, ey;
     bool loop = true;
     while (loop) // make sure enemy won't be generated on top of the player
@@ -115,7 +115,7 @@ void Game::spawnRandom()
         ex = this->randomUniform(0, m_mapSize-1);
         for(long unsigned int i = 0; i < m_actors.size(); i++)
         {
-            if (m_actors[i]->x() == ex && m_actors[i]->y() == ey)
+            if ((m_actors[i]->x() == ex && m_actors[i]->y() == ey) || (abs(m_mapSize/2 - ex) <= 1 && abs(m_mapSize/2 - ey) <= 1))
             {
                 loop = true;
                 break;
